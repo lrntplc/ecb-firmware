@@ -1,6 +1,7 @@
-DIRS		= clocks_panel
-BUILDDIRS	= $(DIRS:%=build-%)
-CLEANDIRS	= $(DIRS:%=clean-%)
+CLOCKS_PANEL_DIR = clocks_panel
+DIRS		 = $(CLOCKS_PANEL_DIR)
+BUILDDIRS	 = $(DIRS:%=build-%)
+CLEANDIRS	 = $(DIRS:%=clean-%)
 
 all: $(BUILDDIRS)
 
@@ -10,6 +11,9 @@ $(BUILDDIRS):
 clean: $(CLEANDIRS)
 $(CLEANDIRS):
 	make -C $(@:clean-%=%) clean
+
+flash_clocks_panel:
+	make -C $(CLOCKS_PANEL_DIR) flash
 
 .PHONY: subdirs $(BUILDDIRS)
 .PHONY: subdirs $(CLEANDIRS)

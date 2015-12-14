@@ -1,4 +1,5 @@
 PRG		= clocks_panel
+OUTDIR		= ../out
 MCUTARGET	= atmega8
 MCUFREQ		= 8000000
 
@@ -6,24 +7,49 @@ CC		= avr-gcc
 LD		= avr-ld
 OBJCOPY	 	= avr-objcopy
 
-INCLUDE		= -I../include
-CFLAGS		= -Wall -Os -DF_CPU=$(MCUFREQ) -mmcu=$(MCUTARGET) $(INCLUDE)
+INCLUDEDIR	= ../include
+CFLAGS		= -Wall -Os -DF_CPU=$(MCUFREQ) -mmcu=$(MCUTARGET) -I$(INCLUDEDIR) -MMD -MP
 LDFLAGS	 	=
 
-OBJ		= tmr.o chess_clock.o max7219.o clocks_panel.o ../common/spi.o
+COMMONDIR	= ../common
+COMMONS		= $(COMMONDIR)/spi.c
 
-all: $(PRG).hex
+SRCDIR		= .
+SRCS		= $(shell find $(SRCDIR) -type f -name "*.c")
 
-$(PRG).elf: $(OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+OBJDIR		= $(OUTDIR)/$(PRG)
+OBJS		= $(patsubst $(SRCDIR)/%, $(OBJDIR)/%, $(SRCS:.c=.o))
+OBJS		+= $(patsubst $(COMMONDIR)/%, $(OBJDIR)/%, $(COMMONS:.c=.o))
 
-hex: $(PRG).hex
+vpath %.c $(SRCDIR) $(COMMONDIR)
 
-%.hex: %.elf
+.PHONY: all
+all: $(OUTDIR)/$(PRG).hex
+
+$(OBJDIR)/$(PRG).elf: $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^
+
+$(OBJS): | $(OBJDIR)
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+.PHONY: hex
+hex: $(OUTDIR)/$(PRG).hex
+
+$(OUTDIR)/%.hex: $(OBJDIR)/%.elf
 	$(OBJCOPY) -O ihex $< $@
 
-flash: $(PRG).hex
+$(OBJDIR)/%.o: %.c
+	mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+.PHONY: flash
+flash: $(OUTDIR)/$(PRG).hex
 	avrprog2 -m ../avrprog2_xmls/atmega8.xml -f 8000000 --flash w:$^
 
+.PHONY: clean
 clean:
-	@rm -f *.hex *.elf *.o
+	@rm -rf $(OBJDIR) $(OUTDIR)/$(PRG).hex
+
+-include $(OBJDIR)/*.d
