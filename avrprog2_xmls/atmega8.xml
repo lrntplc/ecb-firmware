@@ -1,0 +1,8 @@
+<device>
+	<name>ATmega 8</name>
+	<signature>0x1e9307</signature>
+	<flashSize>8192</flashSize>
+	<flashPageSize>32</flashPageSize>
+	<eepromSize>512</eepromSize>
+	<numOfFuses>2</numOfFuses>
+</device>

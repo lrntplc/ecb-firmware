@@ -1,0 +1,5 @@
+.*swp
+.clang_complete
+.syntastic_avrgcc_config
+.vimsettings
+
