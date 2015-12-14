@@ -41,7 +41,6 @@ $(OUTDIR)/%.hex: $(OBJDIR)/%.elf
 	$(OBJCOPY) -O ihex $< $@
 
 $(OBJDIR)/%.o: %.c
-	mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: flash
