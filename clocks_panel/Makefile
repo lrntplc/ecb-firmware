@@ -27,7 +27,7 @@ vpath %.c $(SRCDIR) $(COMMONDIR)
 all: $(OUTDIR)/$(PRG).hex
 
 $(OBJDIR)/$(PRG).elf: $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 $(OBJS): | $(OBJDIR)
 
