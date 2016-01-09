@@ -21,18 +21,6 @@ static volatile uint8_t clock_tick;
 
 static uint8_t active_clock = 0;
 
-static volatile uint8_t button_pressed;
-
-static void int0_enable()
-{
-	GICR |= _BV(INT0);
-}
-
-static void int0_disable()
-{
-	GICR &= ~_BV(INT0);
-}
-
 ISR(SPI_STC_vect)
 {
 }
@@ -43,21 +31,7 @@ ISR(TIMER1_OVF_vect)
 	clock_tick = true;
 }
 
-ISR(INT0_vect)
-{
-	/* disable the int0 interrupt */
-	int0_disable();
-
-	PORTC ^= _BV(PC1);
-	button_pressed = true;
-}
-
-
-
 int main(void) {
-	DDRC = _BV(DDC1);
-	int0_enable();
-
 	spi_master_init();
 
 	/* Enable interrupts */
@@ -80,17 +54,6 @@ int main(void) {
 				chess_clock_stop();
 
 			clock_tick = false;
-		}
-
-		if (button_pressed) {
-			_delay_ms(500);
-			active_clock ^= 0x1;
-			chess_clock_stop();
-			chess_clock_set_active(active_clock);
-			chess_clock_start();
-			button_pressed = false;
-
-			int0_enable();
 		}
 	}
 
