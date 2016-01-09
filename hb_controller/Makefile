@@ -1,4 +1,4 @@
-PRG		= clocks_panel
+PRG		= hb_controller
 OUTDIR		= ../out
 MCUTARGET	= atmega8
 MCUFREQ		= 8000000

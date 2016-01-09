@@ -64,6 +64,9 @@ int main(void) {
 	sei();
 
 	max7219_init();
+	max7219_test();
+	while(1)
+		;
 
 	chess_clock_init();
 	chess_clock_set(0, 90, 0, TMR1_RESET_VALUE);

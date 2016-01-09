@@ -1,4 +1,4 @@
-CLOCKS_PANEL_DIR = clocks_panel
+CLOCKS_PANEL_DIR = hb_controller
 DIRS		 = $(CLOCKS_PANEL_DIR)
 BUILDDIRS	 = $(DIRS:%=build-%)
 CLEANDIRS	 = $(DIRS:%=clean-%)
