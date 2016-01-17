@@ -9,8 +9,9 @@ static struct i2c_reg *reg_map = NULL;
 static uint8_t max_reg_no = 0;
 static struct i2c_reg *current_reg = NULL;
 
-#define MAX_REG		(&reg_map[max_reg_no - 1])
+static rmap_changed_cb i2c_handlers_cb = NULL;
 
+#define MAX_REG		(&reg_map[max_reg_no - 1])
 
 static void i2c_new_pkt(uint8_t pkt_type)
 {
@@ -33,8 +34,11 @@ static uint8_t i2c_consume(uint8_t data)
 		goto consume_out;
 	}
 
-	if (!current_reg->read_only)
+	if (!current_reg->read_only) {
 		current_reg->reg = data;
+		current_reg->reg_changed = true;
+		i2c_handlers_cb();
+	}
 
 	current_reg++;
 
@@ -68,6 +72,7 @@ void i2c_handlers_init(struct i2c_reg *rmap, uint8_t rmap_size,
 {
 	reg_map = rmap;
 	max_reg_no = rmap_size;
+	i2c_handlers_cb = cb;
 
 	i2c_slave_init(0x11, &i2c_handlers);
 }

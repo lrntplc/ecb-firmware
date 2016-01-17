@@ -10,15 +10,26 @@
 #include "i2c_handlers.h"
 #include "util.h"
 
+enum {
+	LED_ROW_0 = 0,
+	LED_ROW_1,
+	LED_ROW_2,
+	LED_ROW_3,
+	SENSOR_ROW_0,
+	SENSOR_ROW_1,
+	SENSOR_ROW_2,
+	SENSOR_ROW_3
+};
+
 static struct i2c_reg reg_map[] = {
-	{.read_only = false, }, /* led row 1 */
-	{.read_only = false, }, /* led row 2 */
-	{.read_only = false, }, /* led row 2 */
-	{.read_only = false, }, /* led row 4 */
-	{.read_only = true, },  /* sensor row 1 */
-	{.read_only = true, },  /* sensor row 2 */
-	{.read_only = true, },  /* sensor row 3 */
-	{.read_only = true, },  /* sensor row 4 */
+	[LED_ROW_0]	= {.read_only = false, },
+	[LED_ROW_1]	= {.read_only = false, },
+	[LED_ROW_2]	= {.read_only = false, },
+	[LED_ROW_3]	= {.read_only = false, },
+	[SENSOR_ROW_0]	= {.read_only = true, },
+	[SENSOR_ROW_1]	= {.read_only = true, },
+	[SENSOR_ROW_2]	= {.read_only = true, },
+	[SENSOR_ROW_3]	= {.read_only = true, },
 };
 
 /*
@@ -28,6 +39,7 @@ static struct i2c_reg reg_map[] = {
  * clock cycle.
  */
 static volatile uint8_t clock_tick;
+static volatile uint8_t reg_map_changed = false;
 
 static uint8_t active_clock = 0;
 
@@ -37,8 +49,11 @@ ISR(TIMER1_OVF_vect)
 	clock_tick = true;
 }
 
+/* called from ISR context */
 void rmap_changed()
 {
+	reg_map_changed = true;
+	PORTB |= _BV(PB0);
 }
 
 static void hb_ctrl_main_loop()
@@ -50,11 +65,22 @@ static void hb_ctrl_main_loop()
 
 			clock_tick = false;
 		}
+
+		if (reg_map_changed) {
+			int row;
+
+			for (row = LED_ROW_0; row < LED_ROW_3; row++) {
+				if (reg_map[row].reg_changed) {
+					/* TODO */
+				}
+			}
+		}
 	}
 }
 
 int main(void) {
 //[lp]	spi_master_init();
+	DDRB |= _BV(DDB0);
 	i2c_handlers_init(reg_map, ARRAY_SIZE(reg_map), rmap_changed);
 
 	/* Enable interrupts */
