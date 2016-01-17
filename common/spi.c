@@ -1,7 +1,12 @@
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/interrupt.h>
 
 #include "spi.h"
+
+ISR(SPI_STC_vect)
+{
+}
 
 void spi_master_init()
 {
