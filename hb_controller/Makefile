@@ -12,7 +12,7 @@ CFLAGS		= -Wall -Os -DF_CPU=$(MCUFREQ) -mmcu=$(MCUTARGET) -I$(INCLUDEDIR) -MMD -
 LDFLAGS	 	=
 
 COMMONDIR	= ../common
-COMMONS		= $(COMMONDIR)/spi.c
+COMMONS		= $(COMMONDIR)/spi.c $(COMMONDIR)/i2c_slave.c
 
 SRCDIR		= .
 SRCS		= $(shell find $(SRCDIR) -type f -name "*.c")
