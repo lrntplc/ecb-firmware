@@ -6,4 +6,8 @@
 
 #define ARRAY_SIZE(x)		(sizeof(x) / sizeof(*(x)))
 
+void status_led_init();
+void status_led_blink();
+void status_led_toggle();
+
 #endif /* _UTIL_H_ */
