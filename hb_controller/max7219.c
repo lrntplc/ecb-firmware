@@ -55,9 +55,11 @@ void max7219_digit_update(uint8_t digit_id, uint8_t bcd_codeb_val)
 
 void max7219_init()
 {
+	max7219_switch_state(MAX7219_STATE_OFF);
+
 	memset(&max7219, 0, sizeof(max7219)); /* initialize max7219 structure */
 
-	max7219_decode_mode_set(MAX7219_DECODE_CODEB_0_7); /* code B for 0-7 */
+	max7219_decode_mode_set(MAX7219_DECODE_CODEB_0_3); /* code B for 0-3 */
 	max7219_scan_limit_set(7); /* scan all digits */
 	max7219_intensity_set(0x8); /* set digit intensity to half */
 
