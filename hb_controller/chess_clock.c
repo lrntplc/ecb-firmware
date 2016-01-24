@@ -4,80 +4,68 @@
 #include "chess_clock.h"
 #include "max7219.h"
 
-static uint8_t active_clock = 0;
-
-static struct chess_clock_t clocks[2] = {
-	/* first chess clock */
-	{
-		.max7219_digits_min = {0, 1},
-		.max7219_digits_sec = {2, 3},
-	},
-	/* second chess clock */
-	{
-		.max7219_digits_min = {4, 5},
-		.max7219_digits_sec = {6, 7},
-	}
+static struct chess_clock_t chess_clock = {
+	.tmr_value = 0,
+	.max7219_digits_min = {0, 1},
+	.max7219_digits_sec = {2, 3},
 };
 
-void chess_clock_init()
+static void tmr_expiration_callback()
 {
-	tmr1_init();
+	chess_clock.cb();
+}
+
+void chess_clock_init(chess_clock_tick_cb cb)
+{
+	chess_clock.cb = cb;
+	tmr_init(TMR_2, TMR2_PRESCALER_128, 0, tmr_expiration_callback);
 }
 
 void chess_clock_start()
 {
-	tmr1_start(clocks[active_clock].tmr1);
+	tmr_start(TMR_2, chess_clock.tmr_value);
 }
 
 void chess_clock_stop()
 {
-	tmr1_stop();
-	clocks[active_clock].tmr1 = TCNT1;
-}
-
-void chess_clock_set_active(uint8_t clk_id)
-{
-	active_clock = clk_id;
+	chess_clock.tmr_value = tmr_stop(TMR_2);
 }
 
 /* Update the actual digits on the display */
-static void chess_clock_update(uint8_t id)
+static void chess_clock_update()
 {
-	max7219_digit_update(clocks[id].max7219_digits_min[0],
-			     clocks[id].min / 10);
-	max7219_digit_update(clocks[id].max7219_digits_min[1],
-			     clocks[id].min % 10);
+	max7219_digit_update(chess_clock.max7219_digits_min[0],
+			     chess_clock.min / 10);
+	max7219_digit_update(chess_clock.max7219_digits_min[1],
+			     chess_clock.min % 10);
 
-	max7219_digit_update(clocks[id].max7219_digits_sec[0],
-			     clocks[id].sec / 10);
-	max7219_digit_update(clocks[id].max7219_digits_sec[1],
-			     clocks[id].sec % 10);
+	max7219_digit_update(chess_clock.max7219_digits_sec[0],
+			     chess_clock.sec / 10);
+	max7219_digit_update(chess_clock.max7219_digits_sec[1],
+			     chess_clock.sec % 10);
 }
 
 /* Setup the clock */
-void chess_clock_set(uint8_t id, uint8_t min, uint8_t sec, uint16_t tmr_value)
+void chess_clock_set(uint8_t min, uint8_t sec)
 {
-	clocks[id].min = min;
-	clocks[id].sec = sec;
-	clocks[id].tmr1 = tmr_value;
+	chess_clock.min = min;
+	chess_clock.sec = sec;
 
-	chess_clock_update(id);
+	chess_clock_update();
 }
 
-/* Decrement the active clock */
+/* Decrement the clock */
 int8_t chess_clock_tick()
 {
-	uint8_t id = active_clock;
-
-	if (clocks[id].min > 0 && clocks[id].sec == 0) {
-		clocks[id].min--;
-		clocks[id].sec = 59;
+	if (chess_clock.min > 0 && chess_clock.sec == 0) {
+		chess_clock.min--;
+		chess_clock.sec = 59;
 	} else
-		clocks[id].sec--;
+		chess_clock.sec--;
 
-	chess_clock_update(id);
+	chess_clock_update();
 
-	if (clocks[id].min == 0 && clocks[id].sec == 0)
+	if (chess_clock.min == 0 && chess_clock.sec == 0)
 		return -1; /* time's up */
 
 	return 0;
