@@ -5,7 +5,6 @@
 
 #include "chess_clock.h"
 #include "spi.h"
-#include "tmr.h"
 #include "max7219.h"
 #include "i2c_handlers.h"
 #include "util.h"
@@ -18,7 +17,9 @@ enum {
 	SENSOR_ROW_0,
 	SENSOR_ROW_1,
 	SENSOR_ROW_2,
-	SENSOR_ROW_3
+	SENSOR_ROW_3,
+	CLOCK_MIN,
+	CLOCK_SEC,
 };
 
 static struct i2c_reg reg_map[] = {
@@ -30,40 +31,34 @@ static struct i2c_reg reg_map[] = {
 	[SENSOR_ROW_1]	= {.read_only = true, },
 	[SENSOR_ROW_2]	= {.read_only = true, },
 	[SENSOR_ROW_3]	= {.read_only = true, },
+	[CLOCK_MIN]	= {.read_only = false, },
+	[CLOCK_SEC]	= {.read_only = false, },
 };
 
-/*
- * This will be set to 1 in the timer1 ISR and cleared after we've done our
- * thing, on the main loop. This is an 8 bit flag and we shouldn't need any
- * protection on accessing it since reading/writing to it it's done in a single
- * clock cycle.
- */
-static volatile uint8_t clock_tick;
+static volatile uint8_t clock_ticked = false;
 static volatile uint8_t reg_map_changed = false;
 
-static uint8_t active_clock = 0;
-
-ISR(TIMER1_OVF_vect)
-{
-	TCNT1 = TMR1_RESET_VALUE;
-	clock_tick = true;
-}
-
 /* called from ISR context */
-void rmap_changed()
+static void rmap_changed()
 {
 	reg_map_changed = true;
-	PORTB |= _BV(PB0);
+}
+
+static void clock_ticked_callback()
+{
+	clock_ticked = true;
 }
 
 static void hb_ctrl_main_loop()
 {
 	while (1) {
-		if (clock_tick) {
+		if (clock_ticked) {
 			if (chess_clock_tick() < 0)
 				chess_clock_stop();
 
-			clock_tick = false;
+			clock_ticked = false;
+
+			status_led_toggle();
 		}
 
 		if (reg_map_changed) {
@@ -79,22 +74,19 @@ static void hb_ctrl_main_loop()
 }
 
 int main(void) {
-//[lp]	spi_master_init();
-	DDRB |= _BV(DDB0);
+	status_led_init();
+
+	spi_master_init();
+
 	i2c_handlers_init(reg_map, ARRAY_SIZE(reg_map), rmap_changed);
 
 	/* Enable interrupts */
 	sei();
 
-//[lp]	max7219_init();
-//[lp]	max7219_test();
-	while(1)
-		;
+	max7219_init();
 
-	chess_clock_init();
-	chess_clock_set(0, 90, 0, TMR1_RESET_VALUE);
-	chess_clock_set(1, 90, 0, TMR1_RESET_VALUE);
-	chess_clock_set_active(active_clock);
+	chess_clock_init(clock_ticked_callback);
+	chess_clock_set(90, 0);
 	chess_clock_start();
 
 	hb_ctrl_main_loop();
