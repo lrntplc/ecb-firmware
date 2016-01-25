@@ -74,5 +74,5 @@ void i2c_handlers_init(struct i2c_reg *rmap, uint8_t rmap_size,
 	max_reg_no = rmap_size;
 	i2c_handlers_cb = cb;
 
-	i2c_slave_init(0x11, &i2c_handlers);
+	i2c_slave_init(I2C_ADDRESS, &i2c_handlers);
 }

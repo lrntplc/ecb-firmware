@@ -9,46 +9,69 @@ OBJCOPY	 	= avr-objcopy
 
 INCLUDEDIR	= ../include
 CFLAGS		= -Wall -Os -DF_CPU=$(MCUFREQ) -mmcu=$(MCUTARGET) -I$(INCLUDEDIR) -MMD -MP
+CFLAGS_TOP	= -DI2C_ADDRESS=0x11
+CFLAGS_BOT	= -DI2C_ADDRESS=0x12
 LDFLAGS	 	=
 
-COMMONDIR	= ../common
-COMMONS		= $(COMMONDIR)/spi.c $(COMMONDIR)/i2c_slave.c $(COMMONDIR)/tmr.c $(COMMONDIR)/util.c
+OBJDIR		= $(OUTDIR)/$(PRG)
+OBJDIR_TOP	= $(OUTDIR)/$(PRG)/top
+OBJDIR_BOT	= $(OUTDIR)/$(PRG)/bottom
 
 SRCDIR		= .
 SRCS		= $(shell find $(SRCDIR) -type f -name "*.c")
+OBJS		= $(filter-out %/i2c_handlers.o,$(patsubst $(SRCDIR)/%, $(OBJDIR)/%, $(SRCS:.c=.o)))
 
-OBJDIR		= $(OUTDIR)/$(PRG)
-OBJS		= $(patsubst $(SRCDIR)/%, $(OBJDIR)/%, $(SRCS:.c=.o))
-OBJS		+= $(patsubst $(COMMONDIR)/%, $(OBJDIR)/%, $(COMMONS:.c=.o))
+COMMONDIR	= ../common
+COMMONS		= spi.c i2c_slave.c tmr.c util.c
+OBJS		+= $(addprefix $(OBJDIR)/,$(COMMONS:.c=.o))
+
+OBJS_TOP	= $(OBJDIR_TOP)/i2c_handlers.o
+OBJS_BOT	= $(OBJDIR_BOT)/i2c_handlers.o
 
 vpath %.c $(SRCDIR) $(COMMONDIR)
 
 .PHONY: all
-all: $(OUTDIR)/$(PRG).hex
+all: hex
 
-$(OBJDIR)/$(PRG).elf: $(OBJS)
+$(OUTDIR)/top_%.hex: $(OBJDIR_TOP)/top_$(PRG).elf
+	$(OBJCOPY) -O ihex $< $@
+
+$(OUTDIR)/bot_%.hex: $(OBJDIR_BOT)/bot_$(PRG).elf
+	$(OBJCOPY) -O ihex $< $@
+
+$(OBJDIR_TOP)/top_%.elf: $(OBJS) $(OBJS_TOP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-$(OBJS): | $(OBJDIR)
+$(OBJDIR_BOT)/bot_%.elf: $(OBJS) $(OBJS_BOT)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
+$(OBJS): | $(OBJDIR_TOP) $(OBJDIR_BOT)
 
-.PHONY: hex
-hex: $(OUTDIR)/$(PRG).hex
-
-$(OUTDIR)/%.hex: $(OBJDIR)/%.elf
-	$(OBJCOPY) -O ihex $< $@
+$(OBJDIR_TOP) $(OBJDIR_BOT):
+	mkdir -p $@
 
 $(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-.PHONY: flash
-flash: $(OUTDIR)/$(PRG).hex
-	avrprog2 -m ../avrprog2_xmls/atmega8.xml -f 8000000 --flash w:$^
+$(OBJDIR_TOP)/%.o: %.c
+	$(CC) $(CFLAGS) $(CFLAGS_TOP) -c -o $@ $<
+
+$(OBJDIR_BOT)/%.o: %.c
+	$(CC) $(CFLAGS) $(CFLAGS_BOT) -c -o $@ $<
+
+.PHONY: hex
+hex: $(OUTDIR)/top_$(PRG).hex $(OUTDIR)/bot_$(PRG).hex
+
+.PHONY: flash_top
+flash_top: $(OUTDIR)/top_$(PRG).hex
+	avrprog2 -m ../avrprog2_xmls/atmega8.xml -f $(MCUFREQ) --flash w:$^
+
+.PHONY: flash_bottom
+flash_bottom: $(OUTDIR)/bot_$(PRG).hex
+	avrprog2 -m ../avrprog2_xmls/atmega8.xml -f $(MCUFREQ) --flash w:$^
 
 .PHONY: clean
 clean:
-	@rm -rf $(OBJDIR) $(OUTDIR)/$(PRG).hex
+	@rm -rf $(OBJDIR) $(OUTDIR)/*.hex
 
 -include $(OBJDIR)/*.d
