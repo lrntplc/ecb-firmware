@@ -35,8 +35,8 @@ static uint8_t i2c_consume(uint8_t data)
 	}
 
 	if (!current_reg->read_only) {
-		current_reg->reg = data;
-		current_reg->reg_changed = true;
+		current_reg->consume_val = data;
+		current_reg->cv_changed = true;
 		i2c_handlers_cb();
 	}
 
@@ -54,7 +54,8 @@ static uint8_t i2c_feed(uint8_t *data)
 		return 0;
 	}
 
-	*data = current_reg->reg;
+	*data = current_reg->feed_val;
+	current_reg->fv_changed = false;
 
 	current_reg++;
 
