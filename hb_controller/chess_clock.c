@@ -15,6 +15,24 @@ static void tmr_expiration_callback()
 	chess_clock.cb();
 }
 
+static void chess_clock_blank_digit(uint8_t digit)
+{
+	max7219_send(MAX7219_DIGIT_ID_TO_ADDR(digit), 0x0f);
+}
+
+static void chess_clock_blank_leading_digit()
+{
+	chess_clock_blank_digit(chess_clock.max7219_digits_min[0]);
+}
+
+void chess_clock_blank_all()
+{
+	chess_clock_blank_digit(chess_clock.max7219_digits_min[0]);
+	chess_clock_blank_digit(chess_clock.max7219_digits_min[1]);
+	chess_clock_blank_digit(chess_clock.max7219_digits_sec[0]);
+	chess_clock_blank_digit(chess_clock.max7219_digits_sec[1]);
+}
+
 void chess_clock_init(chess_clock_tick_cb cb)
 {
 	chess_clock.cb = cb;
@@ -34,8 +52,12 @@ void chess_clock_stop()
 /* Update the actual digits on the display */
 static void chess_clock_update()
 {
-	max7219_digit_update(chess_clock.max7219_digits_min[0],
-			     chess_clock.min / 10);
+	if (chess_clock.min / 10)
+		max7219_digit_update(chess_clock.max7219_digits_min[0],
+				     chess_clock.min / 10);
+	else
+		chess_clock_blank_leading_digit();
+
 	max7219_digit_update(chess_clock.max7219_digits_min[1],
 			     chess_clock.min % 10);
 
@@ -50,6 +72,8 @@ void chess_clock_set(uint8_t min, uint8_t sec)
 {
 	chess_clock.min = min;
 	chess_clock.sec = sec;
+
+	chess_clock.tmr_value = 0;
 
 	chess_clock_update();
 }
