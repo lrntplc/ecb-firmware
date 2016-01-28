@@ -9,5 +9,7 @@
 void status_led_init();
 void status_led_blink();
 void status_led_toggle();
+void host_interrupt_assert();
+void host_interrupt_release();
 
 #endif /* _UTIL_H_ */
