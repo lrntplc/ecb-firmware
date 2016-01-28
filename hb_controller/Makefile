@@ -5,7 +5,8 @@ MCUFREQ		= 8000000
 
 CC		= avr-gcc
 LD		= avr-ld
-OBJCOPY	 	= avr-objcopy
+OBJCOPY		= avr-objcopy
+SIZE		= avr-size
 
 INCLUDEDIR	= ../include
 CFLAGS		= -Wall -Os -DF_CPU=$(MCUFREQ) -mmcu=$(MCUTARGET) -I$(INCLUDEDIR) -MMD -MP
@@ -41,9 +42,11 @@ $(OUTDIR)/bot_%.hex: $(OBJDIR_BOT)/bot_$(PRG).elf
 
 $(OBJDIR_TOP)/top_%.elf: $(OBJS) $(OBJS_TOP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(SIZE) -t $@
 
 $(OBJDIR_BOT)/bot_%.elf: $(OBJS) $(OBJS_BOT)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(SIZE) -t $@
 
 $(OBJS): | $(OBJDIR_TOP) $(OBJDIR_BOT)
 
