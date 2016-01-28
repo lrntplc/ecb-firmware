@@ -9,10 +9,10 @@ OBJCOPY		= avr-objcopy
 SIZE		= avr-size
 
 INCLUDEDIR	= ../include
-CFLAGS		= -Wall -Os -DF_CPU=$(MCUFREQ) -mmcu=$(MCUTARGET) -I$(INCLUDEDIR) -MMD -MP
+CFLAGS		= -Wall -Os -DF_CPU=$(MCUFREQ) -mmcu=$(MCUTARGET) -I$(INCLUDEDIR) -MMD -MP -ffunction-sections -fdata-sections
 CFLAGS_TOP	= -DI2C_ADDRESS=0x11
 CFLAGS_BOT	= -DI2C_ADDRESS=0x12
-LDFLAGS	 	=
+LDFLAGS	 	= -Wl,--gc-sections
 
 OBJDIR		= $(OUTDIR)/$(PRG)
 OBJDIR_TOP	= $(OUTDIR)/$(PRG)/top
@@ -20,7 +20,7 @@ OBJDIR_BOT	= $(OUTDIR)/$(PRG)/bottom
 
 SRCDIR		= .
 SRCS		= $(shell find $(SRCDIR) -type f -name "*.c")
-OBJS		= $(filter-out %/i2c_handlers.o,$(patsubst $(SRCDIR)/%, $(OBJDIR)/%, $(SRCS:.c=.o)))
+OBJS		= $(patsubst $(SRCDIR)/%, $(OBJDIR)/%, $(SRCS:.c=.o))
 
 COMMONDIR	= ../common
 COMMONS		= spi.c i2c_slave.c tmr.c util.c
