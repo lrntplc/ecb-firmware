@@ -53,6 +53,15 @@ void max7219_digit_update(uint8_t digit_id, uint8_t bcd_codeb_val)
 	max7219_send(MAX7219_DIGIT_ID_TO_ADDR(digit_id), bcd_codeb_val);
 }
 
+static uint8_t max7219_blank_values[] = {0x0f, 0x0f, 0x0f, 0x0f, 0, 0, 0, 0};
+
+static void max7219_blank_all() {
+	int i;
+
+	for (i = 0; i < sizeof(max7219_blank_values); i++)
+		max7219_send(MAX7219_REG_DIG0 + i, max7219_blank_values[i]);
+}
+
 void max7219_init()
 {
 	max7219_switch_state(MAX7219_STATE_OFF);
@@ -62,6 +71,9 @@ void max7219_init()
 	max7219_decode_mode_set(MAX7219_DECODE_CODEB_0_3); /* code B for 0-3 */
 	max7219_scan_limit_set(7); /* scan all digits */
 	max7219_intensity_set(0x8); /* set digit intensity to half */
+
+	/* blank all digits */
+	max7219_blank_all();
 
 	/* switch on */
 	max7219_switch_state(MAX7219_STATE_ON);
