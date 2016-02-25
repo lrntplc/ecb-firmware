@@ -24,6 +24,7 @@ void chess_clock_init(chess_clock_tick_cb cb);
 void chess_clock_start();
 void chess_clock_stop();
 void chess_clock_set(uint8_t min, uint8_t sec);
+void chess_clock_get(uint8_t *min, uint8_t *sec);
 int8_t chess_clock_tick();
 void chess_clock_blank_all();
 

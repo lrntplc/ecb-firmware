@@ -7,6 +7,11 @@ enum {
 	TMR_2
 };
 
+enum {
+	TMR_STATUS_STOPPED,
+	TMR_STATUS_RUNNING,
+};
+
 typedef void (*tmr_expiration_cb)();
 
 /* TMR0 and TMR1 prescaler values */
@@ -35,5 +40,6 @@ void tmr_init(uint8_t tmr_no, uint8_t prescaler, uint16_t reset_value,
 	      tmr_expiration_cb cb);
 void tmr_start(uint8_t tmr_no, uint16_t tmr_value);
 uint16_t tmr_stop(uint8_t tmr_no);
+uint8_t tmr_status_get(uint8_t tmr_no);
 
 #endif

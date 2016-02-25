@@ -78,6 +78,12 @@ void chess_clock_set(uint8_t min, uint8_t sec)
 	chess_clock_update();
 }
 
+void chess_clock_get(uint8_t *min, uint8_t *sec)
+{
+	*min = chess_clock.min;
+	*sec = chess_clock.sec;
+}
+
 /* Decrement the clock */
 int8_t chess_clock_tick()
 {

@@ -114,14 +114,25 @@ static void hb_ctrl_reg_cmd_chgd(struct i2c_reg *reg, uint8_t index)
 	if (reg_changes & CMD_START_CLOCK) {
 		if (reg->consume_val & CMD_START_CLOCK)
 			chess_clock_start();
-		else
+		else {
 			chess_clock_stop();
+			chess_clock_get(&reg_map[REG_CLOCK_MIN].feed_val,
+					&reg_map[REG_CLOCK_SEC].feed_val);
+		}
 	}
 
 	if (reg_changes & CMD_START_SENSORS) {
-		if (reg->consume_val & CMD_START_SENSORS)
+		if (reg->consume_val & CMD_START_SENSORS) {
+			uint8_t sensors[4];
+			uint8_t i2c_reg, i;
+
 			sensors_scan_start();
-		else
+
+			sensors_state_get(sensors);
+			for (i2c_reg = REG_SENSOR_ROW_0, i = 0;
+				i < SENSOR_ROWS; i++, i2c_reg++)
+				reg_map[i2c_reg].feed_val = sensors[i];
+		} else
 			sensors_scan_stop();
 	}
 

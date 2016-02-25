@@ -16,6 +16,7 @@
  */
 
 #include <avr/io.h>
+#include <util/delay.h>
 
 #include "sensors.h"
 #include "tmr.h"
@@ -26,13 +27,13 @@ static sensors_changed_cb sensors_cb;
 static uint8_t current_row = 0;
 
 /*
- * The reset value is chosen to have an expiration rate of 4Hz, in order
- * to check each row once a second.
+ * The reset value is chosen to have an expiration rate of 16Hz, in order
+ * to check each row 4 times per second.
  *
  * reset_value = 2^16 - Fosc / prescaler / Fexp =
- *             = 2^16 - 8000000 / 64 / 4 = 34286
+ *             = 2^16 - 8000000 / 8 / 16 = 3036
  */
-#define TMR1_RESET_VALUE	34286
+#define TMR1_RESET_VALUE	3036
 
 static void timer_cb()
 {
@@ -42,7 +43,7 @@ static void timer_cb()
 	status_led_toggle();
 
 	if (is_debouncing_active) {
-		uint8_t debounced_state = PORTD;
+		uint8_t debounced_state = ~PIND;
 
 		if (row_state == debounced_state) {
 			/* we have a steady new state, signal it */
@@ -56,9 +57,7 @@ static void timer_cb()
 		goto next_row;
 	}
 
-	PORTC &= ~_BV(1 << current_row);
-
-	row_state = PORTD;
+	row_state = ~PIND;
 
 	if (sensors[current_row] == row_state) /* nothing changed */
 		goto next_row;
@@ -69,8 +68,9 @@ static void timer_cb()
 	return;
 
 next_row:
-	PORTC |= _BV(1 << current_row);
+	PORTC |= _BV(current_row);
 	current_row = (current_row + 1) & 0x3;
+	PORTC &= ~_BV(current_row);
 }
 
 void sensors_init(sensors_changed_cb cb)
@@ -85,7 +85,7 @@ void sensors_init(sensors_changed_cb cb)
 	DDRC |= _BV(DDC0) | _BV(DDC1) | _BV(DDC2) | _BV(DDC3); /* outputs */
 	PORTC |= _BV(PC0) | _BV(PC1) | _BV(PC2) | _BV(PC3); /* set as high */
 
-	tmr_init(TMR_1, TMR01_PRESCALER_64, TMR1_RESET_VALUE, timer_cb);
+	tmr_init(TMR_1, TMR01_PRESCALER_8, TMR1_RESET_VALUE, timer_cb);
 }
 
 void sensors_scan_start()
@@ -94,21 +94,26 @@ void sensors_scan_start()
 
 	/* initial scan of all rows */
 	for (i = 0; i < SENSOR_ROWS; i++) {
-		PORTC &= ~_BV(1 << i);
+		PORTC &= ~_BV(i);
 
-		sensors[i] = PORTD;
+		_delay_us(100);
 
-		PORTC |= _BV(1 << i);
+		sensors[i] = ~PIND;
+
+		PORTC |= _BV(i);
 
 	}
 
 	current_row = 0;
+	PORTC &= ~_BV(current_row);
 	tmr_start(TMR_1, TMR1_RESET_VALUE);
 }
 
 void sensors_scan_stop()
 {
 	tmr_stop(TMR_1);
+
+	status_led_off();
 }
 
 void sensors_state_get(uint8_t *sensors_data)

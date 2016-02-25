@@ -70,7 +70,7 @@ void max7219_init()
 
 	max7219_decode_mode_set(MAX7219_DECODE_CODEB_0_3); /* code B for 0-3 */
 	max7219_scan_limit_set(7); /* scan all digits */
-	max7219_intensity_set(0x8); /* set digit intensity to half */
+	max7219_intensity_set(0x1); /* set digit intensity to minimum */
 
 	/* blank all digits */
 	max7219_blank_all();

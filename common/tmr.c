@@ -106,4 +106,19 @@ uint16_t tmr_stop(uint8_t tmr_no)
 	return 0;
 }
 
+uint8_t tmr_status_get(uint8_t tmr_no)
+{
+	switch (tmr_no) {
+		case TMR_0:
+			return !!(TCCR0 & TMR_PRESCALER_MASK);
+
+		case TMR_1:
+			return !!(TCCR1B & TMR_PRESCALER_MASK);
+
+		case TMR_2:
+			return !!(TCCR2 & TMR_PRESCALER_MASK);
+	}
+
+	return 0;
+}
 

@@ -9,6 +9,8 @@
 void status_led_init();
 void status_led_blink();
 void status_led_toggle();
+void status_led_on();
+void status_led_off();
 void host_interrupt_assert();
 void host_interrupt_release();
 
