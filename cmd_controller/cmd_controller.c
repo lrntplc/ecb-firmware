@@ -32,8 +32,8 @@ enum {
 #define LED_WIFI_ON		(1 << 6)
 #define LED_BT_ON		(1 << 7)
 
-#define CMD_START_BOOTLOADER	(1 << 0) /* start the bootloader */
-#define CMD_MASK		0x01
+#define CMD_START_BOOTLOADER	(1 << 3) /* start the bootloader */
+#define CMD_MASK		0x0f
 
 static void (*start_bootloader)(void) __attribute__((noreturn)) = (void*) 0x1c00;
 
@@ -153,6 +153,16 @@ static void cmd_ctrl_reg_cmd_chgd(struct i2c_reg *reg, uint8_t index)
 	uint8_t reg_changes = (reg->feed_val ^ reg->consume_val) & CMD_MASK;
 
 	if (reg_changes & CMD_START_BOOTLOADER) {
+		/* stop led timer */
+		TCCR1B &= ~(_BV(CS11) | _BV(CS10));
+
+		/* switch off all leds */
+		PORTD = 0;
+
+		host_interrupt_release();
+
+		cli();
+
 		start_bootloader();
 	}
 
