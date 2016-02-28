@@ -9,6 +9,7 @@
 enum {
 	REG_LED = 0,
 	REG_BTN,
+	REG_CMD,
 
 	REG_TOTAL_NUMBER
 };
@@ -31,10 +32,16 @@ enum {
 #define LED_WIFI_ON		(1 << 6)
 #define LED_BT_ON		(1 << 7)
 
+#define CMD_START_BOOTLOADER	(1 << 0) /* start the bootloader */
+#define CMD_MASK		0x01
+
+static void (*start_bootloader)(void) __attribute__((noreturn)) = (void*) 0x1c00;
+
 static struct i2c_reg reg_map[] = {
 							  /* changed by: */
 	[REG_LED]		= {.read_only = false, }, /* ISR */
 	[REG_BTN]		= {.read_only = false, }, /* ISR and main loop */
+	[REG_CMD]		= {.read_only = false, }, /* ISR */
 };
 
 static volatile uint8_t rmap_changed = false;
@@ -126,11 +133,6 @@ ISR(TIMER1_COMPB_vect)
 /* The handlers are called from main loop */
 static void cmd_ctrl_reg_leds_chgd(struct i2c_reg *reg, uint8_t index)
 {
-//[lp]	if (reg->consume_val && !led_tmr_running)
-//[lp]		led_tmr_start();
-//[lp]	else if (!reg->consume_val)
-//[lp]		led_tmr_stop();
-
 	reg_map[index].feed_val = reg->consume_val;
 }
 
@@ -146,11 +148,23 @@ static void cmd_ctrl_reg_btn_chgd(struct i2c_reg *reg, uint8_t index)
 	reg_map[index].feed_val = reg->feed_val;
 }
 
+static void cmd_ctrl_reg_cmd_chgd(struct i2c_reg *reg, uint8_t index)
+{
+	uint8_t reg_changes = (reg->feed_val ^ reg->consume_val) & CMD_MASK;
+
+	if (reg_changes & CMD_START_BOOTLOADER) {
+		start_bootloader();
+	}
+
+	reg_map[index].feed_val = reg->consume_val;
+}
+
 typedef void (*reg_chgd_handler_t)(struct i2c_reg *, uint8_t);
 
 static const reg_chgd_handler_t reg_chgd_handler[] = {
 	[REG_LED]		= cmd_ctrl_reg_leds_chgd,
 	[REG_BTN]		= cmd_ctrl_reg_btn_chgd,
+	[REG_CMD]		= cmd_ctrl_reg_cmd_chgd,
 };
 
 static void cmd_ctrl_handle_rmap() {

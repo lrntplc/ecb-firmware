@@ -13,13 +13,16 @@
 #define CMD_START_CLOCK		(1 << 0)
 #define CMD_START_SENSORS	(1 << 1)
 #define CMD_BLANK_CLOCK		(1 << 2)
-#define CMD_MASK		0x07
+#define CMD_START_BOOTLOADER	(1 << 3)
+#define CMD_MASK		0x0f
 
 #define STATUS_CLOCK_EXPIRED	(1 << 0)
 #define STATUS_SENSORS_CHANGED	(1 << 1)
 #define STATUS_MASK		0x03
 
 #define MAX7219_LED_ROW0	MAX7219_REG_DIG4
+
+static void (*start_bootloader)(void) __attribute__((noreturn)) = (void*) 0x1c00;
 
 enum {
 	REG_LED_ROW_0 = 0,
@@ -141,6 +144,10 @@ static void hb_ctrl_reg_cmd_chgd(struct i2c_reg *reg, uint8_t index)
 
 		/* this bit is write only, reading will return 0 */
 		reg->consume_val &= ~CMD_BLANK_CLOCK;
+	}
+
+	if (reg_changes & CMD_START_BOOTLOADER) {
+		start_bootloader();
 	}
 
 	reg_map[index].feed_val = reg->consume_val;
