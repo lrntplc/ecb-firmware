@@ -3,9 +3,13 @@
 #include <avr/interrupt.h>
 
 #include "spi.h"
+#include "util.h"
+
+static volatile uint8_t transfer_done;
 
 ISR(SPI_STC_vect)
 {
+	transfer_done = true;
 }
 
 void spi_master_init()
@@ -40,6 +44,8 @@ void spi_master_send(uint8_t data)
 {
 	SPDR = data;
 
-	while (!(SPSR & (1 << SPIF)))
+	transfer_done = false;
+
+	while (!transfer_done)
 		;
 }

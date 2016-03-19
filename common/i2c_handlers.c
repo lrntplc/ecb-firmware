@@ -43,7 +43,7 @@ static uint8_t i2c_consume(uint8_t data)
 	current_reg++;
 
 consume_out:
-	return MAX_REG - current_reg + 1;
+	return (MAX_REG - current_reg) / sizeof(struct i2c_reg) + 1;
 }
 
 /* Send data to the bus */
@@ -59,7 +59,7 @@ static uint8_t i2c_feed(uint8_t *data)
 
 	current_reg++;
 
-	return MAX_REG - current_reg + 1;
+	return (MAX_REG - current_reg) / sizeof(struct i2c_reg) + 1;
 }
 
 struct i2c_slave_handlers i2c_handlers = {
