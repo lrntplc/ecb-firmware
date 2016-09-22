@@ -60,6 +60,7 @@ static struct i2c_reg reg_map[] = {
 static volatile uint8_t clock_ticked = false;
 static volatile uint8_t rmap_changed = false;
 static volatile uint8_t sensors_changed = false;
+static volatile uint8_t animation = true;
 
 /* The callbacks are called from ISR context */
 static void rmap_changed_callback()
@@ -113,6 +114,8 @@ static void hb_ctrl_handle_sensors() {
 static void hb_ctrl_reg_cmd_chgd(struct i2c_reg *reg, uint8_t index)
 {
 	uint8_t reg_changes = (reg->feed_val ^ reg->consume_val) & CMD_MASK;
+
+	animation = false;
 
 	if (reg_changes & CMD_START_CLOCK) {
 		if (reg->consume_val & CMD_START_CLOCK)
@@ -252,6 +255,10 @@ static void hb_ctrl_handle_rmap() {
 
 static void hb_ctrl_main_loop()
 {
+	uint16_t timer = 1;
+	uint8_t digit_index = 0;
+	int8_t step;
+
 	while (1) {
 		if (clock_ticked) {
 			clock_ticked = false;
@@ -269,6 +276,28 @@ static void hb_ctrl_main_loop()
 			sensors_changed = false;
 
 			hb_ctrl_handle_sensors();
+		}
+
+		if (animation) {
+			uint8_t i, digit_val;
+
+			timer++;
+
+			if (timer)
+				continue;
+
+			for (i = 0; i < 4; i++) {
+				digit_val = i == digit_index ? 0xa : 0xf;
+
+				max7219_send(MAX7219_DIGIT_ID_TO_ADDR(i), digit_val);
+			}
+
+			if (digit_index == 0)
+				step = 1;
+			else if (digit_index == 3)
+				step = -1;
+
+			digit_index += step;
 		}
 	}
 }
