@@ -27,32 +27,36 @@ static sensors_changed_cb sensors_cb;
 static uint8_t current_row = 0;
 
 /*
- * The reset value is chosen to have an expiration rate of 16Hz, in order
- * to check each row 4 times per second.
+ * The reset value is chosen to have an expiration rate of 100Hz, in order
+ * to check each row 25 times per second.
  *
  * reset_value = 2^16 - Fosc / prescaler / Fexp =
- *             = 2^16 - 8000000 / 8 / 16 = 3036
+ *             = 2^16 - 8000000 / 8 / 100 = 55536
  */
-#define TMR1_RESET_VALUE	3036
+#define TMR1_RESET_VALUE	55536
 
 static void timer_cb()
 {
 	static uint8_t row_state;
-	static uint8_t is_debouncing_active = false;
+	static uint8_t debouncing_cnt = 0;
 
 	status_led_toggle();
 
-	if (is_debouncing_active) {
+	if (debouncing_cnt) {
 		uint8_t debounced_state = ~PIND;
 
-		if (row_state == debounced_state) {
-			/* we have a steady new state, signal it */
-			sensors[current_row] = row_state;
-
-			sensors_cb();
+		if (row_state != debounced_state) {
+			debouncing_cnt = 0;
+			goto next_row;
 		}
 
-		is_debouncing_active = false;
+		if (--debouncing_cnt)
+			return;
+
+		/* we have a steady new state, signal it */
+		sensors[current_row] = row_state;
+
+		sensors_cb();
 
 		goto next_row;
 	}
@@ -62,8 +66,8 @@ static void timer_cb()
 	if (sensors[current_row] == row_state) /* nothing changed */
 		goto next_row;
 
-	/* activate debouncing (i.e. check the same row again */
-	is_debouncing_active = true;
+	/* activate debouncing (i.e. check the same row 4 times) */
+	debouncing_cnt = 4;
 
 	return;
 
