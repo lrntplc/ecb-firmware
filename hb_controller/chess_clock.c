@@ -49,9 +49,22 @@ void chess_clock_stop()
 	chess_clock.tmr_value = tmr_stop(TMR_2);
 }
 
+static void chess_clock_show_dashes()
+{
+	max7219_send(MAX7219_DIGIT_ID_TO_ADDR(chess_clock.max7219_digits_min[0]), 0xa);
+	max7219_send(MAX7219_DIGIT_ID_TO_ADDR(chess_clock.max7219_digits_min[1]), 0xa);
+	max7219_send(MAX7219_DIGIT_ID_TO_ADDR(chess_clock.max7219_digits_sec[0]), 0xa);
+	max7219_send(MAX7219_DIGIT_ID_TO_ADDR(chess_clock.max7219_digits_sec[1]), 0xa);
+}
+
 /* Update the actual digits on the display */
 static void chess_clock_update()
 {
+	if (!chess_clock.min && !chess_clock.sec) {
+		chess_clock_show_dashes();
+		return;
+	}
+
 	if (chess_clock.min / 10)
 		max7219_digit_update(chess_clock.max7219_digits_min[0],
 				     chess_clock.min / 10);
