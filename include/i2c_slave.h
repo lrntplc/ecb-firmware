@@ -1,5 +1,5 @@
 /*
- *  AVR I2C slave driver.
+ *  Atmega8 I2C slave driver header.
  *
  *  Copyright 2016 - Laurentiu Palcu <lpalcu@gmail.com>
  *
