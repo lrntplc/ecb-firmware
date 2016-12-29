@@ -94,13 +94,6 @@ static void led_tmr_start()
 	led_tmr_running = true;
 }
 
-static void led_tmr_stop()
-{
-	TCCR1B &= ~0x7;
-
-	led_tmr_running = false;
-}
-
 static volatile uint8_t buttons_stable_state = 0;
 
 static inline void btn_check()
