@@ -96,6 +96,10 @@ static void led_tmr_start()
 
 static volatile uint8_t buttons_stable_state = 0;
 
+/*
+ * Credit should go to Peter Dannegger for this elegant debouncing mechanism.
+ * https://github.com/thaletterb/dannis_debounce/blob/master/c/getkey_demo.c
+ */
 static inline void btn_check()
 {
 	static uint8_t cnt_high = 0xff, cnt_low = 0xff;
